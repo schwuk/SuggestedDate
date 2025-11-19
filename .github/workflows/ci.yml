@@ -1,0 +1,22 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: macos-17
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build
+        run: swift build -v
+
+      - name: Run tests
+        run: swift test -v
+
+      - name: Build documentation
+        run: swift package generate-documentation --target SuggestedDate
