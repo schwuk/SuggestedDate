@@ -26,10 +26,10 @@ import Testing
         #expect(view.selectedDate == selectedDate)
     }
 
-    @Test("Default suggestions match SuggestedDate.allCases")
+    @Test("Default suggestions contain original four cases")
     func testDefaultSuggestions() {
-        #expect(SuggestedDate.defaultSuggestions == SuggestedDate.allCases)
         #expect(SuggestedDate.defaultSuggestions.count == 4)
+        #expect(SuggestedDate.defaultSuggestions == [.today, .tomorrow, .nextWorkingDay, .nextWeek])
     }
 
     @Test("All suggestions produce valid dates")
@@ -106,5 +106,45 @@ import Testing
         let uniqueIds = Set(ids)
 
         #expect(ids.count == uniqueIds.count)
+    }
+
+    @Test("View initializes with onSuggestionSelected callback") @MainActor
+    func testViewInitializationWithCallback() {
+        var callbackCalled = false
+        let view = DateSuggestionView(
+            selectedDate: .constant(Date()),
+            onSuggestionSelected: { _ in callbackCalled = true }
+        )
+
+        #expect(view.selectedDate == view.selectedDate)
+        #expect(!callbackCalled)
+    }
+
+    @Test("Contextual suggestions include deadline options on weekday")
+    func testContextualSuggestionsOnWeekday() {
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = TimeZone(secondsFromGMT: 0)!
+
+        // Monday 2001-01-01
+        let monday = cal.date(from: DateComponents(year: 2001, month: 1, day: 1))!
+        let suggestions = SuggestedDate.suggestions(for: monday, calendar: cal)
+
+        #expect(suggestions.count == 6)
+        #expect(suggestions.contains(.endOfThisWeek))
+        #expect(suggestions.contains(.endOfNextWeek))
+    }
+
+    @Test("Contextual suggestions on Friday omit endOfThisWeek")
+    func testContextualSuggestionsOnFriday() {
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = TimeZone(secondsFromGMT: 0)!
+
+        // Friday 2001-01-05
+        let friday = cal.date(from: DateComponents(year: 2001, month: 1, day: 5))!
+        let suggestions = SuggestedDate.suggestions(for: friday, calendar: cal)
+
+        #expect(suggestions.count == 5)
+        #expect(!suggestions.contains(.endOfThisWeek))
+        #expect(suggestions.contains(.endOfNextWeek))
     }
 }

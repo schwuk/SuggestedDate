@@ -24,6 +24,8 @@ import Foundation
 ///   - `tomorrow`: The day after the current day.
 ///   - `nextWorkingDay`: The next weekday, skipping weekends.
 ///   - `nextWeek`: The first day of the next week.
+///   - `endOfThisWeek`: The last working day of the current week. Rolls forward if already on or past it.
+///   - `endOfNextWeek`: The last working day of next week.
 public enum SuggestedDate: String, CaseIterable, CustomStringConvertible, Identifiable,
     Codable, Sendable, Hashable, DateSuggesting
 {
@@ -31,6 +33,8 @@ public enum SuggestedDate: String, CaseIterable, CustomStringConvertible, Identi
     case tomorrow
     case nextWorkingDay
     case nextWeek
+    case endOfThisWeek
+    case endOfNextWeek
 
     /// A unique identifier for each `SuggestedDate` case.
     ///
@@ -51,10 +55,45 @@ public enum SuggestedDate: String, CaseIterable, CustomStringConvertible, Identi
         case .tomorrow: return "Tomorrow"
         case .nextWorkingDay: return "Next Working Day"
         case .nextWeek: return "Next Week"
+        case .endOfThisWeek: return "End of This Week"
+        case .endOfNextWeek: return "End of Next Week"
         }
     }
 
-    public static var defaultSuggestions: [SuggestedDate] { allCases }
+    /// Whether this suggestion represents a deadline (end-of-period) rather than a point in time.
+    public var isDeadline: Bool {
+        switch self {
+        case .endOfThisWeek, .endOfNextWeek: return true
+        default: return false
+        }
+    }
+
+    /// The original four suggestions, suitable for settings pickers.
+    public static var defaultSuggestions: [SuggestedDate] {
+        [.today, .tomorrow, .nextWorkingDay, .nextWeek]
+    }
+
+    /// Contextual suggestions including deadline options.
+    ///
+    /// Includes all default suggestions plus applicable deadline suggestions.
+    /// `endOfThisWeek` is excluded when it resolves to the same date as `endOfNextWeek`
+    /// (i.e., when the reference date is on or past the last working day of the current week).
+    public static func suggestions(
+        for date: Date,
+        calendar: Calendar = .current
+    ) -> [SuggestedDate] {
+        var result = defaultSuggestions
+
+        let endThisWeek = SuggestedDate.endOfThisWeek.date(onOrAfter: date, calendar: calendar)
+        let endNextWeek = SuggestedDate.endOfNextWeek.date(onOrAfter: date, calendar: calendar)
+
+        if endThisWeek != endNextWeek {
+            result.append(.endOfThisWeek)
+        }
+        result.append(.endOfNextWeek)
+
+        return result
+    }
 
     /// Returns a suggested date based on the selected case.
     ///
@@ -81,6 +120,10 @@ public enum SuggestedDate: String, CaseIterable, CustomStringConvertible, Identi
         case .nextWorkingDay:
             return nextWorkingDay(after: onOrAfter, calendar: calendar)
         case .nextWeek: return nextWeek(from: onOrAfter, calendar: calendar)
+        case .endOfThisWeek:
+            return endOfThisWeek(from: onOrAfter, calendar: calendar)
+        case .endOfNextWeek:
+            return endOfNextWeek(from: onOrAfter, calendar: calendar)
         }
     }
 
@@ -142,5 +185,52 @@ public enum SuggestedDate: String, CaseIterable, CustomStringConvertible, Identi
             ) ?? from
 
         return startOfDay(for: nextWeek, calendar: calendar)
+    }
+
+    /// Returns the last working day of the week containing `from`.
+    /// If `from` is already on or past the last working day, returns the last working day of the *next* week.
+    private func endOfThisWeek(
+        from: Date,
+        calendar: Calendar
+    ) -> Date {
+        let lastWorkingDay = Self.lastWorkingDayOfWeek(containing: from, calendar: calendar)
+        let today = startOfDay(for: from, calendar: calendar)
+
+        if today >= lastWorkingDay {
+            // Already on or past the last working day — roll forward to next week
+            return endOfNextWeek(from: from, calendar: calendar)
+        }
+        return lastWorkingDay
+    }
+
+    /// Returns the last working day of the week after the one containing `from`.
+    private func endOfNextWeek(
+        from: Date,
+        calendar: Calendar
+    ) -> Date {
+        let oneWeekLater = calendar.date(byAdding: .weekOfYear, value: 1, to: from) ?? from
+        return Self.lastWorkingDayOfWeek(containing: oneWeekLater, calendar: calendar)
+    }
+
+    /// Finds the last non-weekend day in the calendar week containing `date`.
+    ///
+    /// Walks backward from the last day of the week until a non-weekend day is found.
+    private static func lastWorkingDayOfWeek(
+        containing date: Date,
+        calendar: Calendar
+    ) -> Date {
+        // Find the start of the week containing this date
+        let weekStart = calendar.dateInterval(of: .weekOfYear, for: date)?.start ?? date
+
+        // The last day of the week is 6 days after the start
+        let weekEnd = calendar.date(byAdding: .day, value: 6, to: weekStart) ?? date
+
+        // Walk backward to find the last non-weekend day
+        var candidate = weekEnd
+        while calendar.isDateInWeekend(candidate) {
+            candidate = calendar.date(byAdding: .day, value: -1, to: candidate) ?? candidate
+        }
+
+        return calendar.startOfDay(for: candidate)
     }
 }

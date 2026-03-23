@@ -10,16 +10,22 @@ import SwiftUI
 
 public struct DateSuggestionView: View {
     @Binding var selectedDate: Date
+    var onSuggestionSelected: ((SuggestedDate) -> Void)?
 
-    public init(selectedDate: Binding<Date>) {
+    public init(
+        selectedDate: Binding<Date>,
+        onSuggestionSelected: ((SuggestedDate) -> Void)? = nil
+    ) {
         self._selectedDate = selectedDate
+        self.onSuggestionSelected = onSuggestionSelected
     }
 
     @State private var now = Date()
     @State private var showingCustomPicker = false
 
     public var body: some View {
-        let suggestedDates = SuggestedDate.defaultSuggestions.map { option in
+        let suggestions = SuggestedDate.suggestions(for: now)
+        let suggestedDates = suggestions.map { option in
             (option: option, date: option.date(onOrAfter: now))
         }
 
@@ -36,8 +42,14 @@ public struct DateSuggestionView: View {
             VStack(alignment: .leading) {
                 Text("Suggestions").font(.caption)
                 ForEach(suggestedDates, id: \.option.id) { suggestion in
+                    if suggestion.option.isDeadline
+                        && suggestion.option == suggestedDates.first(where: { $0.option.isDeadline })?.option
+                    {
+                        Divider()
+                    }
                     Button(action: {
                         selectedDate = suggestion.date
+                        onSuggestionSelected?(suggestion.option)
                         showingCustomPicker = false
                     }) {
                         HStack {
@@ -65,9 +77,9 @@ public struct DateSuggestionView: View {
                             .font(.caption)
                         }.fixedSize()
                     }
-                    
+
                 }.buttonStyle(.borderless)
-                
+
             }
             .onAppear {
                 now = Date()

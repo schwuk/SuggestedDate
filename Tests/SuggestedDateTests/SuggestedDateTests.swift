@@ -39,6 +39,10 @@ import Testing
         #expect(suggestedDate.description == "Next Working Day")
         suggestedDate = .nextWeek
         #expect(suggestedDate.description == "Next Week")
+        suggestedDate = .endOfThisWeek
+        #expect(suggestedDate.description == "End of This Week")
+        suggestedDate = .endOfNextWeek
+        #expect(suggestedDate.description == "End of Next Week")
     }
 
     @Test("Today returns start of day")
@@ -202,5 +206,129 @@ import Testing
         comps.minute = 0
         let expectedMonday = calendarGMT.date(from: comps)!
         #expect(result == expectedMonday)
+    }
+
+    // MARK: - End of This Week
+
+    @Test("End of this week on Monday returns Friday of that week")
+    func testEndOfThisWeekFromMonday() {
+        // 2001-01-01 is Monday
+        let monday = calendarGMT.date(from: DateComponents(year: 2001, month: 1, day: 1))!
+        let result = SuggestedDate.endOfThisWeek.date(onOrAfter: monday, calendar: calendarGMT)
+        // Friday 2001-01-05
+        let expected = calendarGMT.date(from: DateComponents(year: 2001, month: 1, day: 5))!
+        #expect(result == expected)
+    }
+
+    @Test("End of this week on Thursday returns Friday of that week")
+    func testEndOfThisWeekFromThursday() {
+        // 2001-01-04 is Thursday
+        let thursday = calendarGMT.date(from: DateComponents(year: 2001, month: 1, day: 4))!
+        let result = SuggestedDate.endOfThisWeek.date(onOrAfter: thursday, calendar: calendarGMT)
+        let expected = calendarGMT.date(from: DateComponents(year: 2001, month: 1, day: 5))!
+        #expect(result == expected)
+    }
+
+    @Test("End of this week on Friday rolls forward to next Friday")
+    func testEndOfThisWeekFromFriday() {
+        // 2001-01-05 is Friday — already on last working day, should roll forward
+        let friday = calendarGMT.date(from: DateComponents(year: 2001, month: 1, day: 5))!
+        let result = SuggestedDate.endOfThisWeek.date(onOrAfter: friday, calendar: calendarGMT)
+        // Next Friday: 2001-01-12
+        let expected = calendarGMT.date(from: DateComponents(year: 2001, month: 1, day: 12))!
+        #expect(result == expected)
+    }
+
+    @Test("End of this week on Saturday rolls forward to next Friday")
+    func testEndOfThisWeekFromSaturday() {
+        // 2001-01-06 is Saturday
+        let saturday = calendarGMT.date(from: DateComponents(year: 2001, month: 1, day: 6))!
+        let result = SuggestedDate.endOfThisWeek.date(onOrAfter: saturday, calendar: calendarGMT)
+        let expected = calendarGMT.date(from: DateComponents(year: 2001, month: 1, day: 12))!
+        #expect(result == expected)
+    }
+
+    @Test("End of this week on Sunday rolls forward to next Friday")
+    func testEndOfThisWeekFromSunday() {
+        // 2001-01-07 is Sunday
+        let sunday = calendarGMT.date(from: DateComponents(year: 2001, month: 1, day: 7))!
+        let result = SuggestedDate.endOfThisWeek.date(onOrAfter: sunday, calendar: calendarGMT)
+        let expected = calendarGMT.date(from: DateComponents(year: 2001, month: 1, day: 12))!
+        #expect(result == expected)
+    }
+
+    // MARK: - End of Next Week
+
+    @Test("End of next week on Monday returns Friday of next week")
+    func testEndOfNextWeekFromMonday() {
+        // 2001-01-01 is Monday → next week's Friday = 2001-01-12
+        let monday = calendarGMT.date(from: DateComponents(year: 2001, month: 1, day: 1))!
+        let result = SuggestedDate.endOfNextWeek.date(onOrAfter: monday, calendar: calendarGMT)
+        let expected = calendarGMT.date(from: DateComponents(year: 2001, month: 1, day: 12))!
+        #expect(result == expected)
+    }
+
+    @Test("End of next week on Friday returns Friday of following week")
+    func testEndOfNextWeekFromFriday() {
+        // 2001-01-05 is Friday → next week's Friday = 2001-01-12
+        let friday = calendarGMT.date(from: DateComponents(year: 2001, month: 1, day: 5))!
+        let result = SuggestedDate.endOfNextWeek.date(onOrAfter: friday, calendar: calendarGMT)
+        let expected = calendarGMT.date(from: DateComponents(year: 2001, month: 1, day: 12))!
+        #expect(result == expected)
+    }
+
+    // MARK: - isDeadline
+
+    @Test("isDeadline returns true only for deadline cases")
+    func testIsDeadline() {
+        #expect(!SuggestedDate.today.isDeadline)
+        #expect(!SuggestedDate.tomorrow.isDeadline)
+        #expect(!SuggestedDate.nextWorkingDay.isDeadline)
+        #expect(!SuggestedDate.nextWeek.isDeadline)
+        #expect(SuggestedDate.endOfThisWeek.isDeadline)
+        #expect(SuggestedDate.endOfNextWeek.isDeadline)
+    }
+
+    // MARK: - suggestions(for:)
+
+    @Test("Suggestions on Monday include both end-of-week options")
+    func testSuggestionsOnMonday() {
+        let monday = calendarGMT.date(from: DateComponents(year: 2001, month: 1, day: 1))!
+        let suggestions = SuggestedDate.suggestions(for: monday, calendar: calendarGMT)
+        #expect(suggestions.contains(.endOfThisWeek))
+        #expect(suggestions.contains(.endOfNextWeek))
+    }
+
+    @Test("Suggestions on Friday exclude endOfThisWeek (matches endOfNextWeek)")
+    func testSuggestionsOnFriday() {
+        let friday = calendarGMT.date(from: DateComponents(year: 2001, month: 1, day: 5))!
+        let suggestions = SuggestedDate.suggestions(for: friday, calendar: calendarGMT)
+        #expect(!suggestions.contains(.endOfThisWeek))
+        #expect(suggestions.contains(.endOfNextWeek))
+    }
+
+    @Test("Suggestions on Saturday exclude endOfThisWeek (matches endOfNextWeek)")
+    func testSuggestionsOnSaturday() {
+        let saturday = calendarGMT.date(from: DateComponents(year: 2001, month: 1, day: 6))!
+        let suggestions = SuggestedDate.suggestions(for: saturday, calendar: calendarGMT)
+        #expect(!suggestions.contains(.endOfThisWeek))
+        #expect(suggestions.contains(.endOfNextWeek))
+    }
+
+    @Test("Suggestions always include the original four cases")
+    func testSuggestionsAlwaysIncludeDefaults() {
+        let monday = calendarGMT.date(from: DateComponents(year: 2001, month: 1, day: 1))!
+        let suggestions = SuggestedDate.suggestions(for: monday, calendar: calendarGMT)
+        for defaultSuggestion in SuggestedDate.defaultSuggestions {
+            #expect(suggestions.contains(defaultSuggestion))
+        }
+    }
+
+    @Test("defaultSuggestions excludes deadline cases")
+    func testDefaultSuggestionsExcludeDeadlines() {
+        let defaults = SuggestedDate.defaultSuggestions
+        #expect(defaults.count == 4)
+        #expect(!defaults.contains(.endOfThisWeek))
+        #expect(!defaults.contains(.endOfNextWeek))
     }
 }
