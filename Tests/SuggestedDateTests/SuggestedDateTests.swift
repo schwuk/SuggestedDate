@@ -430,14 +430,14 @@ import Testing
             for: monday,
             calendar: calendarGMT
         )
-        for defaultSuggestion in SuggestedDate.defaultSuggestions {
-            #expect(suggestions.contains(defaultSuggestion))
+        for suggestion in SuggestedDate.coreSuggestions {
+            #expect(suggestions.contains(suggestion))
         }
     }
 
-    @Test("defaultSuggestions excludes deadline cases")
-    func testDefaultSuggestionsExcludeDeadlines() {
-        let defaults = SuggestedDate.defaultSuggestions
+    @Test("coreSuggestions excludes deadline cases")
+    func testCoreSuggestionsExcludeDeadlines() {
+        let defaults = SuggestedDate.coreSuggestions
         #expect(defaults.count == 4)
         #expect(!defaults.contains(.endOfThisWeek))
         #expect(!defaults.contains(.endOfNextWeek))

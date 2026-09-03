@@ -85,7 +85,7 @@ public enum SuggestedDate: String, CaseIterable, CustomStringConvertible,
     ///
     /// Deadline suggestions resolve to the last working day of a week and therefore
     /// depend on the reference date passed to ``date(onOrAfter:calendar:)``. They are
-    /// excluded from the static ``defaultSuggestions`` and ``extendedSuggestions``
+    /// excluded from the static ``coreSuggestions`` and ``extendedSuggestions``
     /// lists and are instead appended contextually by ``suggestions(for:calendar:base:)``.
     ///
     /// `true` for `.endOfThisWeek` and `.endOfNextWeek`; `false` for all other cases.
@@ -112,24 +112,24 @@ public enum SuggestedDate: String, CaseIterable, CustomStringConvertible,
     ///
     /// ```swift
     /// Picker("Due", selection: $selection) {
-    ///     ForEach(SuggestedDate.defaultSuggestions) { suggestion in
+    ///     ForEach(SuggestedDate.coreSuggestions) { suggestion in
     ///         Text(suggestion.description).tag(suggestion)
     ///     }
     /// }
     /// ```
-    public static let defaultSuggestions: [SuggestedDate] = [
+    public static let coreSuggestions: [SuggestedDate] = [
         .today, .tomorrow, .nextWorkingDay, .nextWeek,
     ]
 
     /// The extended set of suggestions, suitable for settings pickers.
     ///
-    /// Includes all of ``defaultSuggestions`` plus the fixed-offset options
+    /// Includes all of ``coreSuggestions`` plus the fixed-offset options
     /// `inOneWeek` and `inTwoWeeks`, in display order:
     /// `today`, `tomorrow`, `nextWorkingDay`, `nextWeek`, `inOneWeek`, `inTwoWeeks`.
     ///
     /// Deadline suggestions (`endOfThisWeek`, `endOfNextWeek`) are excluded because
     /// they depend on a reference date; use ``suggestions(for:calendar:base:)``
-    /// to append them contextually. This list is also the default `base` for that method.
+    /// to append them contextually.
     ///
     /// ```swift
     /// Picker("Due", selection: $selection) {
@@ -139,7 +139,7 @@ public enum SuggestedDate: String, CaseIterable, CustomStringConvertible,
     /// }
     /// ```
     public static let extendedSuggestions: [SuggestedDate] =
-        defaultSuggestions + [.inOneWeek, .inTwoWeeks]
+        coreSuggestions + [.inOneWeek, .inTwoWeeks]
 
     /// Contextual suggestions including deadline options.
     ///
@@ -150,12 +150,12 @@ public enum SuggestedDate: String, CaseIterable, CustomStringConvertible,
     /// - Parameters:
     ///   - date: The reference date used to resolve the deadline suggestions.
     ///   - calendar: The calendar used for date calculations. Defaults to `.current`.
-    ///   - base: The point-in-time suggestions to start from. Defaults to ``extendedSuggestions``.
+    ///   - base: The point-in-time suggestions to start from. Defaults to ``coreSuggestions``.
     /// - Returns: The suggestions in `base` followed by the applicable deadline suggestions.
     public static func suggestions(
         for date: Date,
         calendar: Calendar = .current,
-        base: [SuggestedDate] = extendedSuggestions
+        base: [SuggestedDate] = coreSuggestions
     ) -> [SuggestedDate] {
         var result = base
 

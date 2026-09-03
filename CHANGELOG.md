@@ -10,11 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `inOneWeek` and `inTwoWeeks` cases
-- `extendedSuggestions` — `defaultSuggestions` plus the fixed-offset cases
-- `base` parameter on `suggestions(for:calendar:base:)` to control the starting list (defaults to `extendedSuggestions`)
+- `extendedSuggestions` — `coreSuggestions` plus the fixed-offset cases
+- `base` parameter on `suggestions(for:calendar:base:)` to control the starting list (defaults to `coreSuggestions`)
 
 ### Changed
 
+- `defaultSuggestions` renamed to `coreSuggestions`
 - Documentation overhaul: per-case docs, fixed symbol links, DocC Topics, day-granularity contract clarified on `DateSuggesting`
 - Added `swift format` configuration; swift-docc-plugin 1.4.3 → 1.5.0
 

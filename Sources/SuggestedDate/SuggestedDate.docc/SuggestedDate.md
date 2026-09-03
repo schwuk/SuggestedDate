@@ -20,7 +20,7 @@ for suggestion in SuggestedDate.suggestions(for: Date()) {
 }
 ```
 
-Use ``SuggestedDate/suggestions(for:calendar:base:)`` rather than `allCases` when populating a picker — it excludes `endOfThisWeek` when it would duplicate `endOfNextWeek`. For a simpler settings picker, ``SuggestedDate/defaultSuggestions`` contains the four core relative-date cases, and ``SuggestedDate/extendedSuggestions`` is a superset that adds `inOneWeek` and `inTwoWeeks`. Either can be used as the `base`.
+Use ``SuggestedDate/suggestions(for:calendar:base:)`` rather than `allCases` when populating a picker — it excludes `endOfThisWeek` when it would duplicate `endOfNextWeek`. For a simpler settings picker, ``SuggestedDate/coreSuggestions`` contains the four core relative-date cases, and ``SuggestedDate/extendedSuggestions`` is a superset that adds `inOneWeek` and `inTwoWeeks`. Either can be used as the `base`.
 
 ### Deadlines vs. Points in Time
 

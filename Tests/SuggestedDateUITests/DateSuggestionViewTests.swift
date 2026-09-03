@@ -26,17 +26,17 @@ import Testing
         #expect(view.selectedDate == selectedDate)
     }
 
-    @Test("Default suggestions contain original four cases")
-    func testDefaultSuggestions() {
-        #expect(SuggestedDate.defaultSuggestions.count == 4)
+    @Test("coreSuggestions contain original four cases")
+    func testCoreSuggestions() {
+        #expect(SuggestedDate.coreSuggestions.count == 4)
         #expect(
-            SuggestedDate.defaultSuggestions == [
+            SuggestedDate.coreSuggestions == [
                 .today, .tomorrow, .nextWorkingDay, .nextWeek,
             ]
         )
     }
 
-    @Test("Extended suggestions contain all six cases")
+    @Test("extendedSuggestions contain all six cases")
     func testExtendedSuggestions() {
         #expect(SuggestedDate.extendedSuggestions.count == 6)
         #expect(
@@ -52,7 +52,7 @@ import Testing
         let now = Date()
         let calendar = Calendar.current
 
-        for suggestion in SuggestedDate.defaultSuggestions {
+        for suggestion in SuggestedDate.coreSuggestions {
             let date = suggestion.date(onOrAfter: now, calendar: calendar)
 
             // Verify date is on or after now
@@ -68,7 +68,7 @@ import Testing
         let now = Date()
         let calendar = Calendar.current
 
-        let dates = SuggestedDate.defaultSuggestions.map { suggestion in
+        let dates = SuggestedDate.coreSuggestions.map { suggestion in
             suggestion.date(onOrAfter: now, calendar: calendar)
         }
 
@@ -83,7 +83,7 @@ import Testing
         let now = Date()
         let calendar = Calendar.current
 
-        for suggestion in SuggestedDate.defaultSuggestions {
+        for suggestion in SuggestedDate.coreSuggestions {
             let date1 = suggestion.date(onOrAfter: now, calendar: calendar)
             let date2 = suggestion.date(onOrAfter: now, calendar: calendar)
 
@@ -117,7 +117,7 @@ import Testing
 
     @Test("All suggestion types have unique descriptions")
     func testSuggestionDescriptionsUnique() {
-        let descriptions = SuggestedDate.defaultSuggestions.map {
+        let descriptions = SuggestedDate.coreSuggestions.map {
             $0.description
         }
         let uniqueDescriptions = Set(descriptions)
@@ -127,7 +127,7 @@ import Testing
 
     @Test("All suggestions are identifiable")
     func testSuggestionsIdentifiable() {
-        let ids = SuggestedDate.defaultSuggestions.map { $0.id }
+        let ids = SuggestedDate.coreSuggestions.map { $0.id }
         let uniqueIds = Set(ids)
 
         #expect(ids.count == uniqueIds.count)
@@ -156,7 +156,7 @@ import Testing
         )!
         let suggestions = SuggestedDate.suggestions(for: monday, calendar: cal)
 
-        #expect(suggestions.count == 8)
+        #expect(suggestions.count == 6)
         #expect(suggestions.contains(.endOfThisWeek))
         #expect(suggestions.contains(.endOfNextWeek))
     }
@@ -172,7 +172,7 @@ import Testing
         )!
         let suggestions = SuggestedDate.suggestions(for: friday, calendar: cal)
 
-        #expect(suggestions.count == 7)
+        #expect(suggestions.count == 5)
         #expect(!suggestions.contains(.endOfThisWeek))
         #expect(suggestions.contains(.endOfNextWeek))
     }
