@@ -4,7 +4,7 @@ Date suggestion utilities for task and reminder due date selection.
 
 ## Overview
 
-SuggestedDate provides a simple API for computing common date suggestions like "today", "tomorrow", "next working day", and "next week". All calculations respect the provided calendar's locale, time zone, and weekend definitions.
+SuggestedDate provides a simple API for computing common date suggestions: "today", "tomorrow", "next working day", "next week", "in one/two weeks", and "end of this/next week". All calculations respect the provided calendar's locale, time zone, and weekend definitions.
 
 ### Basic Usage
 
@@ -14,10 +14,21 @@ import SuggestedDate
 // Get next working day
 let nextWorkday = SuggestedDate.nextWorkingDay.date()
 
-// Iterate all suggestions
-for suggestion in SuggestedDate.allCases {
+// Get the suggestions appropriate for a picker, given the current date
+for suggestion in SuggestedDate.suggestions(for: Date()) {
     print("\(suggestion.description): \(suggestion.date())")
 }
+```
+
+Use ``SuggestedDate/suggestions(for:calendar:base:)`` rather than `allCases` when populating a picker — it excludes `endOfThisWeek` when it would duplicate `endOfNextWeek`. For a simpler settings picker, ``SuggestedDate/coreSuggestions`` contains the four core relative-date cases, and ``SuggestedDate/extendedSuggestions`` is a superset that adds `inOneWeek` and `inTwoWeeks`. Either can be used as the `base`.
+
+### Deadlines vs. Points in Time
+
+Most cases (`today`, `tomorrow`, `inOneWeek`, ...) suggest an exact point in time. `endOfThisWeek` and `endOfNextWeek` instead suggest a deadline — the last working day before a cutoff. ``SuggestedDate/isDeadline`` distinguishes the two, which is useful for phrasing ("Due on" vs "Due by") in UI:
+
+```swift
+let suggestion = SuggestedDate.endOfThisWeek
+let label = suggestion.isDeadline ? "Due by" : "Due on"
 ```
 
 ### Custom Calendars
@@ -41,31 +52,8 @@ Implement ``DateSuggesting`` to create your own suggestions:
 ```swift
 struct NextPayday: DateSuggesting {
     func date(onOrAfter: Date, calendar: Calendar) -> Date {
-        // Return the next 15th or last day of month
+        // Compute and return the next 15th, or last day of month
+        calendar.startOfDay(for: onOrAfter) // placeholder
     }
 }
 ```
-
-## Topics
-
-### Essentials
-
-- ``SuggestedDate``
-- ``DateSuggesting``
-
-### Date Suggestions
-
-- ``SuggestedDate/today``
-- ``SuggestedDate/tomorrow``
-- ``SuggestedDate/nextWorkingDay``
-- ``SuggestedDate/nextWeek``
-
-### Computing Dates
-
-- ``SuggestedDate/date(onOrAfter:calendar:)``
-- ``SuggestedDate/defaultSuggestions``
-
-### Display
-
-- ``SuggestedDate/description``
-- ``SuggestedDate/id``
