@@ -39,6 +39,10 @@ import Testing
         #expect(suggestedDate.description == "Next Working Day")
         suggestedDate = .nextWeek
         #expect(suggestedDate.description == "Next Week")
+        suggestedDate = .inOneWeek
+        #expect(suggestedDate.description == "In One Week")
+        suggestedDate = .inTwoWeeks
+        #expect(suggestedDate.description == "In Two Weeks")
         suggestedDate = .endOfThisWeek
         #expect(suggestedDate.description == "End of This Week")
         suggestedDate = .endOfNextWeek
@@ -208,6 +212,28 @@ import Testing
         #expect(result == expectedMonday)
     }
 
+    // MARK: - In _n_ Weeks
+
+    @Test("In One Week adds seven days")
+    func testInOneWeek() {
+        // 2001-01-01 is Monday
+        let monday = calendarGMT.date(from: DateComponents(year: 2001, month: 1, day: 1))!
+        let result = SuggestedDate.inOneWeek.date(onOrAfter: monday, calendar: calendarGMT)
+        // Friday 2001-01-08
+        let expected = calendarGMT.date(from: DateComponents(year: 2001, month: 1, day: 8))!
+        #expect(result == expected)
+    }
+
+    @Test("In Two Weeks adds fourteen days")
+    func testInTwoWeeks() {
+        // 2001-01-01 is Monday
+        let monday = calendarGMT.date(from: DateComponents(year: 2001, month: 1, day: 1))!
+        let result = SuggestedDate.inTwoWeeks.date(onOrAfter: monday, calendar: calendarGMT)
+        // Friday 2001-01-15
+        let expected = calendarGMT.date(from: DateComponents(year: 2001, month: 1, day: 15))!
+        #expect(result == expected)
+    }
+
     // MARK: - End of This Week
 
     @Test("End of this week on Monday returns Friday of that week")
@@ -327,7 +353,7 @@ import Testing
     @Test("defaultSuggestions excludes deadline cases")
     func testDefaultSuggestionsExcludeDeadlines() {
         let defaults = SuggestedDate.defaultSuggestions
-        #expect(defaults.count == 4)
+        #expect(defaults.count == 6)
         #expect(!defaults.contains(.endOfThisWeek))
         #expect(!defaults.contains(.endOfNextWeek))
     }

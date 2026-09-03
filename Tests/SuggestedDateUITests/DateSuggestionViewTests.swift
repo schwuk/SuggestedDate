@@ -28,8 +28,11 @@ import Testing
 
     @Test("Default suggestions contain original four cases")
     func testDefaultSuggestions() {
-        #expect(SuggestedDate.defaultSuggestions.count == 4)
-        #expect(SuggestedDate.defaultSuggestions == [.today, .tomorrow, .nextWorkingDay, .nextWeek])
+        #expect(SuggestedDate.defaultSuggestions.count == 6)
+        #expect(
+            SuggestedDate.defaultSuggestions == [
+                .today, .tomorrow, .nextWorkingDay, .nextWeek, .inOneWeek, .inTwoWeeks,
+            ])
     }
 
     @Test("All suggestions produce valid dates")
@@ -59,7 +62,7 @@ import Testing
 
         // For most cases: today <= tomorrow <= nextWorkingDay
         if dates.count >= 2 {
-            #expect(dates[0] <= dates[1]) // today <= tomorrow
+            #expect(dates[0] <= dates[1])  // today <= tomorrow
         }
     }
 
@@ -82,7 +85,7 @@ import Testing
         var cal = Calendar(identifier: .gregorian)
         cal.timeZone = TimeZone(secondsFromGMT: 0)!
 
-        let referenceDate = Date(timeIntervalSinceReferenceDate: 0) // 2001-01-01
+        let referenceDate = Date(timeIntervalSinceReferenceDate: 0)  // 2001-01-01
 
         // Verify that suggestions based on reference produce expected dates
         let todayDate = SuggestedDate.today.date(onOrAfter: referenceDate, calendar: cal)
@@ -129,7 +132,7 @@ import Testing
         let monday = cal.date(from: DateComponents(year: 2001, month: 1, day: 1))!
         let suggestions = SuggestedDate.suggestions(for: monday, calendar: cal)
 
-        #expect(suggestions.count == 6)
+        #expect(suggestions.count == 8)
         #expect(suggestions.contains(.endOfThisWeek))
         #expect(suggestions.contains(.endOfNextWeek))
     }
@@ -143,7 +146,7 @@ import Testing
         let friday = cal.date(from: DateComponents(year: 2001, month: 1, day: 5))!
         let suggestions = SuggestedDate.suggestions(for: friday, calendar: cal)
 
-        #expect(suggestions.count == 5)
+        #expect(suggestions.count == 7)
         #expect(!suggestions.contains(.endOfThisWeek))
         #expect(suggestions.contains(.endOfNextWeek))
     }
