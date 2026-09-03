@@ -438,6 +438,14 @@ import Testing
     @Test("defaultSuggestions excludes deadline cases")
     func testDefaultSuggestionsExcludeDeadlines() {
         let defaults = SuggestedDate.defaultSuggestions
+        #expect(defaults.count == 4)
+        #expect(!defaults.contains(.endOfThisWeek))
+        #expect(!defaults.contains(.endOfNextWeek))
+    }
+
+    @Test("extendedSuggestions excludes deadline cases")
+    func testExtendedSuggestionsExcludeDeadlines() {
+        let defaults = SuggestedDate.extendedSuggestions
         #expect(defaults.count == 6)
         #expect(!defaults.contains(.endOfThisWeek))
         #expect(!defaults.contains(.endOfNextWeek))

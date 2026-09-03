@@ -87,6 +87,13 @@ public enum SuggestedDate: String, CaseIterable, CustomStringConvertible,
     /// The original four suggestions, suitable for settings pickers.
     public static var defaultSuggestions: [SuggestedDate] {
         [
+            .today, .tomorrow, .nextWorkingDay, .nextWeek,
+        ]
+    }
+
+    /// The extended set of suggestions, suitable for settings pickers.
+    public static var extendedSuggestions: [SuggestedDate] {
+        [
             .today, .tomorrow, .nextWorkingDay, .nextWeek, .inOneWeek,
             .inTwoWeeks,
         ]
@@ -94,14 +101,15 @@ public enum SuggestedDate: String, CaseIterable, CustomStringConvertible,
 
     /// Contextual suggestions including deadline options.
     ///
-    /// Includes all default suggestions plus applicable deadline suggestions.
+    /// Includes all suggestions in `base` plus applicable deadline suggestions.
     /// `endOfThisWeek` is excluded when it resolves to the same date as `endOfNextWeek`
     /// (i.e., when the reference date is on or past the last working day of the current week).
     public static func suggestions(
         for date: Date,
-        calendar: Calendar = .current
+        calendar: Calendar = .current,
+        base: [SuggestedDate] = extendedSuggestions
     ) -> [SuggestedDate] {
-        var result = defaultSuggestions
+        var result = base
 
         let endThisWeek = SuggestedDate.endOfThisWeek.date(
             onOrAfter: date,

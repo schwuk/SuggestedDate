@@ -28,9 +28,19 @@ import Testing
 
     @Test("Default suggestions contain original four cases")
     func testDefaultSuggestions() {
-        #expect(SuggestedDate.defaultSuggestions.count == 6)
+        #expect(SuggestedDate.defaultSuggestions.count == 4)
         #expect(
             SuggestedDate.defaultSuggestions == [
+                .today, .tomorrow, .nextWorkingDay, .nextWeek,
+            ]
+        )
+    }
+
+    @Test("Extended suggestions contain all six cases")
+    func testExtendedSuggestions() {
+        #expect(SuggestedDate.extendedSuggestions.count == 6)
+        #expect(
+            SuggestedDate.extendedSuggestions == [
                 .today, .tomorrow, .nextWorkingDay, .nextWeek, .inOneWeek,
                 .inTwoWeeks,
             ]
