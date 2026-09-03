@@ -19,16 +19,18 @@ import Foundation
 /// Expected behavior:
 /// - Implementations should be deterministic for the same inputs.
 /// - No side effects (pure calculation).
-/// - The returned date should be greater than or equal to the input date, as
-///   interpreted by the supplied calendar.
-///
-/// - Parameters:
-///   - onOrAfter: The reference date from which to compute the suggestion. The
-///     returned date should be on or after this value.
-///   - calendar: The calendar used to interpret date components, boundaries,
-///     and locale-specific rules (e.g., start of day, weekdays, DST).
-/// - Returns: A Date that represents the next valid suggestion on or after
-///   the provided reference date according to the implementation’s rules.
+/// - The returned date should fall on or after the reference date at day
+///   granularity: never on an earlier day, but possibly earlier within the
+///   same day (for example, the start of the reference day).
 public protocol DateSuggesting {
+    /// Computes the suggested date relative to a reference date.
+    ///
+    /// - Parameters:
+    ///   - onOrAfter: The reference date from which to compute the suggestion.
+    ///     The returned date falls on the same day or a later day.
+    ///   - calendar: The calendar used to interpret date components, boundaries,
+    ///     and locale-specific rules (e.g., start of day, weekdays, DST).
+    /// - Returns: A `Date` representing the suggestion, no earlier than the day
+    ///   containing the reference date according to the implementation’s rules.
     func date(onOrAfter: Date, calendar: Calendar) -> Date
 }

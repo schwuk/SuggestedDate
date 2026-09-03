@@ -27,27 +27,25 @@ import Foundation
 ///   - `Codable`, `Hashable`: For encoding and use in collections.
 ///   - `Sendable`: Safe to share across concurrency domains.
 ///   - ``DateSuggesting``: The package's date suggestion protocol.
-///
-/// Cases:
-///   - `today`: The current day.
-///   - `tomorrow`: The day after the current day.
-///   - `nextWorkingDay`: The next weekday, skipping weekends.
-///   - `nextWeek`: The first day of the next week.
-///   - `inOneWeek`: Exactly one week after the reference date.
-///   - `inTwoWeeks`: Exactly two weeks after the reference date.
-///   - `endOfThisWeek`: The last working day of the current week. Rolls forward if already on or past it.
-///   - `endOfNextWeek`: The last working day of next week.
 public enum SuggestedDate: String, CaseIterable, CustomStringConvertible,
     Identifiable,
     Codable, Sendable, Hashable, DateSuggesting
 {
+    /// The current day.
     case today
+    /// The day after the current day.
     case tomorrow
+    /// The next weekday, skipping weekends.
     case nextWorkingDay
+    /// The first day of the next week.
     case nextWeek
+    /// Exactly one week after the reference date.
     case inOneWeek
+    /// Exactly two weeks after the reference date.
     case inTwoWeeks
+    /// The last working day of the current week. Rolls forward to next week if already on or past it.
     case endOfThisWeek
+    /// The last working day of next week.
     case endOfNextWeek
 
     /// A unique identifier for each `SuggestedDate` case.
@@ -58,11 +56,18 @@ public enum SuggestedDate: String, CaseIterable, CustomStringConvertible,
 
     /// A human-readable string representation of the due date option.
     ///
-    /// - Returns: A string describing the case:
+    /// Conforms to `CustomStringConvertible`, making it suitable for display
+    /// in UI elements such as pickers, menus, and labels.
+    ///
+    /// The string for each case:
     ///   - `.today`: "Today"
     ///   - `.tomorrow`: "Tomorrow"
     ///   - `.nextWorkingDay`: "Next Working Day"
     ///   - `.nextWeek`: "Next Week"
+    ///   - `.inOneWeek`: "In One Week"
+    ///   - `.inTwoWeeks`: "In Two Weeks"
+    ///   - `.endOfThisWeek`: "End of This Week"
+    ///   - `.endOfNextWeek`: "End of Next Week"
     public var description: String {
         switch self {
         case .today: return "Today"
@@ -77,6 +82,18 @@ public enum SuggestedDate: String, CaseIterable, CustomStringConvertible,
     }
 
     /// Whether this suggestion represents a deadline (end-of-period) rather than a point in time.
+    ///
+    /// Deadline suggestions resolve to the last working day of a week and therefore
+    /// depend on the reference date passed to ``date(onOrAfter:calendar:)``. They are
+    /// excluded from the static ``defaultSuggestions`` and ``extendedSuggestions``
+    /// lists and are instead appended contextually by ``suggestions(for:calendar:base:)``.
+    ///
+    /// `true` for `.endOfThisWeek` and `.endOfNextWeek`; `false` for all other cases.
+    ///
+    /// ```swift
+    /// SuggestedDate.endOfThisWeek.isDeadline // true
+    /// SuggestedDate.tomorrow.isDeadline      // false
+    /// ```
     public var isDeadline: Bool {
         switch self {
         case .endOfThisWeek, .endOfNextWeek: return true
@@ -84,26 +101,57 @@ public enum SuggestedDate: String, CaseIterable, CustomStringConvertible,
         }
     }
 
-    /// The original four suggestions, suitable for settings pickers.
-    public static var defaultSuggestions: [SuggestedDate] {
-        [
-            .today, .tomorrow, .nextWorkingDay, .nextWeek,
-        ]
-    }
+    /// The core relative-date suggestions, suitable for settings pickers.
+    ///
+    /// Contains the core relative-date options in display order:
+    /// `today`, `tomorrow`, `nextWorkingDay`, `nextWeek`.
+    ///
+    /// Fixed-offset and deadline options are excluded; use ``extendedSuggestions``
+    /// for a longer static list, or ``suggestions(for:calendar:base:)`` for a
+    /// contextual list that appends deadline suggestions.
+    ///
+    /// ```swift
+    /// Picker("Due", selection: $selection) {
+    ///     ForEach(SuggestedDate.defaultSuggestions) { suggestion in
+    ///         Text(suggestion.description).tag(suggestion)
+    ///     }
+    /// }
+    /// ```
+    public static let defaultSuggestions: [SuggestedDate] = [
+        .today, .tomorrow, .nextWorkingDay, .nextWeek,
+    ]
 
     /// The extended set of suggestions, suitable for settings pickers.
-    public static var extendedSuggestions: [SuggestedDate] {
-        [
-            .today, .tomorrow, .nextWorkingDay, .nextWeek, .inOneWeek,
-            .inTwoWeeks,
-        ]
-    }
+    ///
+    /// Includes all of ``defaultSuggestions`` plus the fixed-offset options
+    /// `inOneWeek` and `inTwoWeeks`, in display order:
+    /// `today`, `tomorrow`, `nextWorkingDay`, `nextWeek`, `inOneWeek`, `inTwoWeeks`.
+    ///
+    /// Deadline suggestions (`endOfThisWeek`, `endOfNextWeek`) are excluded because
+    /// they depend on a reference date; use ``suggestions(for:calendar:base:)``
+    /// to append them contextually. This list is also the default `base` for that method.
+    ///
+    /// ```swift
+    /// Picker("Due", selection: $selection) {
+    ///     ForEach(SuggestedDate.extendedSuggestions) { suggestion in
+    ///         Text(suggestion.description).tag(suggestion)
+    ///     }
+    /// }
+    /// ```
+    public static let extendedSuggestions: [SuggestedDate] =
+        defaultSuggestions + [.inOneWeek, .inTwoWeeks]
 
     /// Contextual suggestions including deadline options.
     ///
-    /// Includes all suggestions in `base` plus applicable deadline suggestions.
+    /// Preserves the order of `base` and appends the applicable deadline suggestions.
     /// `endOfThisWeek` is excluded when it resolves to the same date as `endOfNextWeek`
     /// (i.e., when the reference date is on or past the last working day of the current week).
+    ///
+    /// - Parameters:
+    ///   - date: The reference date used to resolve the deadline suggestions.
+    ///   - calendar: The calendar used for date calculations. Defaults to `.current`.
+    ///   - base: The point-in-time suggestions to start from. Defaults to ``extendedSuggestions``.
+    /// - Returns: The suggestions in `base` followed by the applicable deadline suggestions.
     public static func suggestions(
         for date: Date,
         calendar: Calendar = .current,
@@ -161,51 +209,42 @@ public enum SuggestedDate: String, CaseIterable, CustomStringConvertible,
         calendar: Calendar = .current
     ) -> Date {
         switch self {
-        case .today: return startOfDay(for: onOrAfter, calendar: calendar)
-        case .tomorrow: return tomorrow(from: onOrAfter, calendar: calendar)
+        case .today: return Self.startOfDay(for: onOrAfter, calendar: calendar)
+        case .tomorrow:
+            return Self.tomorrow(from: onOrAfter, calendar: calendar)
         case .nextWorkingDay:
-            return nextWorkingDay(after: onOrAfter, calendar: calendar)
-        case .nextWeek: return nextWeek(from: onOrAfter, calendar: calendar)
+            return Self.nextWorkingDay(after: onOrAfter, calendar: calendar)
+        case .nextWeek:
+            return Self.nextWeek(from: onOrAfter, calendar: calendar)
         case .inOneWeek:
-            return addWeeks(from: onOrAfter, calendar: calendar, weeks: 1)
+            return Self.addWeeks(from: onOrAfter, calendar: calendar, weeks: 1)
         case .inTwoWeeks:
-            return addWeeks(from: onOrAfter, calendar: calendar, weeks: 2)
+            return Self.addWeeks(from: onOrAfter, calendar: calendar, weeks: 2)
         case .endOfThisWeek:
-            return endOfThisWeek(from: onOrAfter, calendar: calendar)
+            return Self.endOfThisWeek(from: onOrAfter, calendar: calendar)
         case .endOfNextWeek:
-            return endOfNextWeek(from: onOrAfter, calendar: calendar)
-
+            return Self.endOfNextWeek(from: onOrAfter, calendar: calendar)
         }
     }
 
-    /// Returns the start of the day for a given date using the specified calendar.
-    ///
-    /// This helper normalizes any time component on the provided date to midnight (00:00:00)
-    /// according to the calendar’s locale and time zone. It is useful for comparing dates
-    /// at day-level granularity and for generating consistent "all-day" values.
-    ///
-    /// - Parameters:
-    ///   - date: The input `Date` whose day boundary should be computed.
-    ///   - calendar: The `Calendar` that defines the day boundary, locale, and time zone.
-    /// - Returns: A `Date` representing midnight at the start of the specified day.
-    public func startOfDay(
+    private static func startOfDay(
         for date: Date,
         calendar: Calendar
     ) -> Date {
         calendar.startOfDay(for: date)
     }
 
-    private func tomorrow(
-        from: Date = Date(),
-        calendar: Calendar = .current
+    private static func tomorrow(
+        from: Date,
+        calendar: Calendar
     ) -> Date {
         let tomorrow = calendar.date(byAdding: .day, value: 1, to: from) ?? from
         return startOfDay(for: tomorrow, calendar: calendar)
     }
 
-    private func nextWorkingDay(
-        after: Date = Date(),
-        calendar: Calendar = .current
+    private static func nextWorkingDay(
+        after: Date,
+        calendar: Calendar
     ) -> Date {
         var nextDate = after
         repeat {
@@ -217,9 +256,9 @@ public enum SuggestedDate: String, CaseIterable, CustomStringConvertible,
         return startOfDay(for: nextDate, calendar: calendar)
     }
 
-    private func nextWeek(
-        from: Date = Date(),
-        calendar: Calendar = .current
+    private static func nextWeek(
+        from: Date,
+        calendar: Calendar
     )
         -> Date
     {
@@ -240,11 +279,11 @@ public enum SuggestedDate: String, CaseIterable, CustomStringConvertible,
 
     /// Returns the last working day of the week containing `from`.
     /// If `from` is already on or past the last working day, returns the last working day of the *next* week.
-    private func endOfThisWeek(
+    private static func endOfThisWeek(
         from: Date,
         calendar: Calendar
     ) -> Date {
-        let lastWorkingDay = Self.lastWorkingDayOfWeek(
+        let lastWorkingDay = lastWorkingDayOfWeek(
             containing: from,
             calendar: calendar
         )
@@ -258,13 +297,13 @@ public enum SuggestedDate: String, CaseIterable, CustomStringConvertible,
     }
 
     /// Returns the last working day of the week after the one containing `from`.
-    private func endOfNextWeek(
+    private static func endOfNextWeek(
         from: Date,
         calendar: Calendar
     ) -> Date {
         let oneWeekLater =
             calendar.date(byAdding: .weekOfYear, value: 1, to: from) ?? from
-        return Self.lastWorkingDayOfWeek(
+        return lastWorkingDayOfWeek(
             containing: oneWeekLater,
             calendar: calendar
         )
@@ -296,14 +335,8 @@ public enum SuggestedDate: String, CaseIterable, CustomStringConvertible,
         return calendar.startOfDay(for: candidate)
     }
 
-    /// Returns the start of day the given number of weeks after `from`.
-    ///
-    /// - Parameters:
-    ///   - from: The reference date.
-    ///   - calendar: The calendar used for the date arithmetic.
-    ///   - weeks: The number of weeks to add. Defaults to 1.
-    /// - Returns: The resulting date, normalized to the start of day. Falls back to `from` if the calendar calculation fails.
-    private func addWeeks(from: Date, calendar: Calendar, weeks: Int = 1)
+    /// Start of day `weeks` weeks after `from`; falls back to `from` if the calendar calculation fails.
+    private static func addWeeks(from: Date, calendar: Calendar, weeks: Int)
         -> Date
     {
         let future =
