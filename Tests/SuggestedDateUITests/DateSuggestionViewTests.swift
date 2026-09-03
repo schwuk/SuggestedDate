@@ -145,6 +145,16 @@ import Testing
         #expect(!callbackCalled)
     }
 
+    @Test("View initializes with a custom base list") @MainActor
+    func testViewInitializationWithBase() {
+        let view = DateSuggestionView(
+            selectedDate: .constant(Date()),
+            base: SuggestedDate.extendedSuggestions
+        )
+
+        #expect(view.base == SuggestedDate.extendedSuggestions)
+    }
+
     @Test("Contextual suggestions include deadline options on weekday")
     func testContextualSuggestionsOnWeekday() {
         var cal = Calendar(identifier: .gregorian)

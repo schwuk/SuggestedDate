@@ -10,13 +10,16 @@ import SwiftUI
 
 public struct DateSuggestionView: View {
     @Binding var selectedDate: Date
+    var base: [SuggestedDate]
     var onSuggestionSelected: ((SuggestedDate) -> Void)?
 
     public init(
         selectedDate: Binding<Date>,
+        base: [SuggestedDate] = SuggestedDate.coreSuggestions,
         onSuggestionSelected: ((SuggestedDate) -> Void)? = nil
     ) {
         self._selectedDate = selectedDate
+        self.base = base
         self.onSuggestionSelected = onSuggestionSelected
     }
 
@@ -24,7 +27,7 @@ public struct DateSuggestionView: View {
     @State private var showingCustomPicker = false
 
     public var body: some View {
-        let suggestions = SuggestedDate.suggestions(for: now)
+        let suggestions = SuggestedDate.suggestions(for: now, base: base)
         let suggestedDates = suggestions.map { option in
             (option: option, date: option.date(onOrAfter: now))
         }
