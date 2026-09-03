@@ -31,8 +31,10 @@ import Testing
         #expect(SuggestedDate.defaultSuggestions.count == 6)
         #expect(
             SuggestedDate.defaultSuggestions == [
-                .today, .tomorrow, .nextWorkingDay, .nextWeek, .inOneWeek, .inTwoWeeks,
-            ])
+                .today, .tomorrow, .nextWorkingDay, .nextWeek, .inOneWeek,
+                .inTwoWeeks,
+            ]
+        )
     }
 
     @Test("All suggestions produce valid dates")
@@ -88,16 +90,26 @@ import Testing
         let referenceDate = Date(timeIntervalSinceReferenceDate: 0)  // 2001-01-01
 
         // Verify that suggestions based on reference produce expected dates
-        let todayDate = SuggestedDate.today.date(onOrAfter: referenceDate, calendar: cal)
-        let tomorrowDate = SuggestedDate.tomorrow.date(onOrAfter: referenceDate, calendar: cal)
+        let todayDate = SuggestedDate.today.date(
+            onOrAfter: referenceDate,
+            calendar: cal
+        )
+        let tomorrowDate = SuggestedDate.tomorrow.date(
+            onOrAfter: referenceDate,
+            calendar: cal
+        )
 
         #expect(todayDate == cal.startOfDay(for: referenceDate))
-        #expect(tomorrowDate == cal.date(byAdding: .day, value: 1, to: todayDate))
+        #expect(
+            tomorrowDate == cal.date(byAdding: .day, value: 1, to: todayDate)
+        )
     }
 
     @Test("All suggestion types have unique descriptions")
     func testSuggestionDescriptionsUnique() {
-        let descriptions = SuggestedDate.defaultSuggestions.map { $0.description }
+        let descriptions = SuggestedDate.defaultSuggestions.map {
+            $0.description
+        }
         let uniqueDescriptions = Set(descriptions)
 
         #expect(descriptions.count == uniqueDescriptions.count)
@@ -129,7 +141,9 @@ import Testing
         cal.timeZone = TimeZone(secondsFromGMT: 0)!
 
         // Monday 2001-01-01
-        let monday = cal.date(from: DateComponents(year: 2001, month: 1, day: 1))!
+        let monday = cal.date(
+            from: DateComponents(year: 2001, month: 1, day: 1)
+        )!
         let suggestions = SuggestedDate.suggestions(for: monday, calendar: cal)
 
         #expect(suggestions.count == 8)
@@ -143,7 +157,9 @@ import Testing
         cal.timeZone = TimeZone(secondsFromGMT: 0)!
 
         // Friday 2001-01-05
-        let friday = cal.date(from: DateComponents(year: 2001, month: 1, day: 5))!
+        let friday = cal.date(
+            from: DateComponents(year: 2001, month: 1, day: 5)
+        )!
         let suggestions = SuggestedDate.suggestions(for: friday, calendar: cal)
 
         #expect(suggestions.count == 7)

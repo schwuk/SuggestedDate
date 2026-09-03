@@ -44,7 +44,9 @@ public struct DateSuggestionView: View {
                 ForEach(suggestedDates, id: \.option.id) { suggestion in
                     if suggestion.option.isDeadline
                         && suggestion.option
-                            == suggestedDates.first(where: { $0.option.isDeadline })?.option
+                            == suggestedDates.first(where: {
+                                $0.option.isDeadline
+                            })?.option
                     {
                         Divider()
                     }
@@ -59,7 +61,10 @@ public struct DateSuggestionView: View {
                                 Text(String(describing: suggestion.option))
                                 Text(
                                     suggestion.date
-                                        .formatted(date: .numeric, time: .omitted)
+                                        .formatted(
+                                            date: .numeric,
+                                            time: .omitted
+                                        )
                                 ).font(.caption)
                             }.fixedSize()
                         }

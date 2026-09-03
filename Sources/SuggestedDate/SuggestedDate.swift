@@ -37,7 +37,8 @@ import Foundation
 ///   - `inTwoWeeks`: Exactly two weeks after the reference date.
 ///   - `endOfThisWeek`: The last working day of the current week. Rolls forward if already on or past it.
 ///   - `endOfNextWeek`: The last working day of next week.
-public enum SuggestedDate: String, CaseIterable, CustomStringConvertible, Identifiable,
+public enum SuggestedDate: String, CaseIterable, CustomStringConvertible,
+    Identifiable,
     Codable, Sendable, Hashable, DateSuggesting
 {
     case today
@@ -85,7 +86,10 @@ public enum SuggestedDate: String, CaseIterable, CustomStringConvertible, Identi
 
     /// The original four suggestions, suitable for settings pickers.
     public static var defaultSuggestions: [SuggestedDate] {
-        [.today, .tomorrow, .nextWorkingDay, .nextWeek, .inOneWeek, .inTwoWeeks]
+        [
+            .today, .tomorrow, .nextWorkingDay, .nextWeek, .inOneWeek,
+            .inTwoWeeks,
+        ]
     }
 
     /// Contextual suggestions including deadline options.
@@ -99,8 +103,14 @@ public enum SuggestedDate: String, CaseIterable, CustomStringConvertible, Identi
     ) -> [SuggestedDate] {
         var result = defaultSuggestions
 
-        let endThisWeek = SuggestedDate.endOfThisWeek.date(onOrAfter: date, calendar: calendar)
-        let endNextWeek = SuggestedDate.endOfNextWeek.date(onOrAfter: date, calendar: calendar)
+        let endThisWeek = SuggestedDate.endOfThisWeek.date(
+            onOrAfter: date,
+            calendar: calendar
+        )
+        let endNextWeek = SuggestedDate.endOfNextWeek.date(
+            onOrAfter: date,
+            calendar: calendar
+        )
 
         if endThisWeek != endNextWeek {
             result.append(.endOfThisWeek)
@@ -226,7 +236,10 @@ public enum SuggestedDate: String, CaseIterable, CustomStringConvertible, Identi
         from: Date,
         calendar: Calendar
     ) -> Date {
-        let lastWorkingDay = Self.lastWorkingDayOfWeek(containing: from, calendar: calendar)
+        let lastWorkingDay = Self.lastWorkingDayOfWeek(
+            containing: from,
+            calendar: calendar
+        )
         let today = startOfDay(for: from, calendar: calendar)
 
         if today >= lastWorkingDay {
@@ -241,8 +254,12 @@ public enum SuggestedDate: String, CaseIterable, CustomStringConvertible, Identi
         from: Date,
         calendar: Calendar
     ) -> Date {
-        let oneWeekLater = calendar.date(byAdding: .weekOfYear, value: 1, to: from) ?? from
-        return Self.lastWorkingDayOfWeek(containing: oneWeekLater, calendar: calendar)
+        let oneWeekLater =
+            calendar.date(byAdding: .weekOfYear, value: 1, to: from) ?? from
+        return Self.lastWorkingDayOfWeek(
+            containing: oneWeekLater,
+            calendar: calendar
+        )
     }
 
     /// Finds the last non-weekend day in the calendar week containing `date`.
@@ -253,15 +270,19 @@ public enum SuggestedDate: String, CaseIterable, CustomStringConvertible, Identi
         calendar: Calendar
     ) -> Date {
         // Find the start of the week containing this date
-        let weekStart = calendar.dateInterval(of: .weekOfYear, for: date)?.start ?? date
+        let weekStart =
+            calendar.dateInterval(of: .weekOfYear, for: date)?.start ?? date
 
         // The last day of the week is 6 days after the start
-        let weekEnd = calendar.date(byAdding: .day, value: 6, to: weekStart) ?? date
+        let weekEnd =
+            calendar.date(byAdding: .day, value: 6, to: weekStart) ?? date
 
         // Walk backward to find the last non-weekend day
         var candidate = weekEnd
         while calendar.isDateInWeekend(candidate) {
-            candidate = calendar.date(byAdding: .day, value: -1, to: candidate) ?? candidate
+            candidate =
+                calendar.date(byAdding: .day, value: -1, to: candidate)
+                ?? candidate
         }
 
         return calendar.startOfDay(for: candidate)
@@ -274,8 +295,11 @@ public enum SuggestedDate: String, CaseIterable, CustomStringConvertible, Identi
     ///   - calendar: The calendar used for the date arithmetic.
     ///   - weeks: The number of weeks to add. Defaults to 1.
     /// - Returns: The resulting date, normalized to the start of day. Falls back to `from` if the calendar calculation fails.
-    private func addWeeks(from: Date, calendar: Calendar, weeks: Int = 1) -> Date {
-        let future = calendar.date(byAdding: .weekOfYear, value: weeks, to: from) ?? from
+    private func addWeeks(from: Date, calendar: Calendar, weeks: Int = 1)
+        -> Date
+    {
+        let future =
+            calendar.date(byAdding: .weekOfYear, value: weeks, to: from) ?? from
         return calendar.startOfDay(for: future)
     }
 }
